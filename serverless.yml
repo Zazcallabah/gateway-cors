@@ -1,0 +1,48 @@
+service: gateway-cors
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  stage: test
+  runtime: nodejs18.x
+  region: eu-west-1
+  versionFunctions: false
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    STAGE: ${self:provider.stage}
+  apiGateway:
+    minimumCompressionSize: 0
+
+functions:
+  health:
+    handler: index.healthHandler
+    memorySize: 128
+    timeout: 20
+    events:
+      - http:
+          method: GET
+          path: health/{any+}
+          cors: true
+
+resources:
+  - Resources:
+      GatewayResponseDefault4XX:
+        Type: 'AWS::ApiGateway::GatewayResponse'
+        Properties:
+          ResponseParameters:
+            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          ResponseType: DEFAULT_4XX
+          RestApiId:
+            Ref: 'ApiGatewayRestApi'
+      GatewayResponseDefault5XX:
+        Type: 'AWS::ApiGateway::GatewayResponse'
+        Properties:
+          ResponseParameters:
+            gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+            gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          ResponseType: DEFAULT_5XX
+          RestApiId:
+            Ref: 'ApiGatewayRestApi'
